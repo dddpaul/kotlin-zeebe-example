@@ -16,6 +16,7 @@ java {
 
 repositories {
 	mavenCentral()
+	maven(url = "https://artifacts.camunda.com/artifactory/camunda-identity-snapshots/")
 }
 
 dependencies {
@@ -32,7 +33,7 @@ dependencies {
 tasks.withType<KotlinCompile> {
 	kotlinOptions {
 		freeCompilerArgs += "-Xjsr305=strict"
-		jvmTarget = "17"
+		jvmTarget = "21"
 	}
 }
 
