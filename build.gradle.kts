@@ -20,7 +20,7 @@ repositories {
 }
 
 dependencies {
-	implementation("io.camunda.spring:spring-boot-starter-camunda:8.4.1")
+	implementation("org.camunda.community.extension.kotlin.coworker:coworker-spring-boot-starter:0.5.0")
 	implementation("me.tongfei:progressbar:0.10.0")
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("org.springframework.boot:spring-boot-starter-actuator")

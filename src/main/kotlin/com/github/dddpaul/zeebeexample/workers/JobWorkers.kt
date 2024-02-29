@@ -9,10 +9,12 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
-import com.github.dddpaul.zeebeexample.RiskError
 import com.github.dddpaul.zeebeexample.RiskError.RISK_LEVEL_ERROR
 import com.github.dddpaul.zeebeexample.RiskLevel
 import com.github.dddpaul.zeebeexample.actuator.ApplicationStats
+import io.camunda.zeebe.client.api.worker.JobClient
+import kotlinx.coroutines.future.await
+import org.camunda.community.extension.coworker.spring.annotation.Coworker
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -31,8 +33,8 @@ class JobWorkers {
     @JvmRecord
     internal data class LoopSettings(val retries: Int, val timeout: String)
 
-    @JobWorker(type = "loop-settings")
-    fun loopSettings(job: ActivatedJob): Map<String, Any> {
+    @Coworker(type = "loop-settings")
+    suspend fun loopSettings(jobClient: JobClient, job: ActivatedJob) {
         var retries = 1
         var timeout = Duration.ofMinutes(20).toString()
         try {
@@ -49,32 +51,48 @@ class JobWorkers {
             log.warn("Application {} warning: {}", job.processInstanceKey, e.message)
         }
         log.info("Application {} loop is configured with retries = {} and timeout = {}", job.processInstanceKey, retries, timeout)
-        return java.util.Map.of<String, Any>("retries", retries, "timeout", timeout)
+        jobClient.newCompleteCommand(job.key)
+                .variables(mapOf("retries" to retries, "timeout" to timeout))
+                .send()
+                .await()
     }
 
     @JobWorker(type = "risk-level")
-    fun riskLevel(job: ActivatedJob, @Variable chance: Int): Map<String, Any> {
+    suspend fun riskLevel(jobClient: JobClient, job: ActivatedJob, @Variable chance: Int) {
         try {
             if (chance >= RiskLevel.values().size) {
                 throw RuntimeException("chance = %d is not acceptable".formatted(chance))
             }
-            return java.util.Map.of("riskLevel", RiskLevel.values().get(chance).name.toLowerCase())
+            jobClient.newCompleteCommand(job.key)
+                    .variables(mapOf("riskLevel" to RiskLevel.values().get(chance).name.toLowerCase()))
+                    .send()
+                    .await()
         } catch (e: Exception) {
             log.error("Application {} error: {}", job.processInstanceKey, e.message)
-            throw RiskError.create(RISK_LEVEL_ERROR, e.message)
+            jobClient.newThrowErrorCommand(job.key)
+                    .errorCode(RISK_LEVEL_ERROR.code)
+                    .errorMessage(RISK_LEVEL_ERROR.message)
+                    .send()
+                    .await()
         }
     }
 
     @JobWorker(type = "approve-app")
-    fun approve(job: ActivatedJob) {
+    suspend fun approve(jobClient: JobClient, job: ActivatedJob) {
         stats?.incrementApproved()
         log.info("Application {} approved", job.processInstanceKey)
+        jobClient.newCompleteCommand(job.key)
+                .send()
+                .await()
     }
 
     @JobWorker(type = "reject-app")
-    fun reject(job: ActivatedJob) {
+    suspend fun reject(jobClient: JobClient, job: ActivatedJob) {
         stats?.incrementRejected()
         log.info("Application {} rejected", job.processInstanceKey)
+        jobClient.newCompleteCommand(job.key)
+                .send()
+                .await()
     }
 
     companion object {
