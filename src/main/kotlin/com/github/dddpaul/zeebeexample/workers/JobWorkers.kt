@@ -2,7 +2,6 @@ package com.github.dddpaul.zeebeexample.workers
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.camunda.zeebe.client.api.response.ActivatedJob
-import io.camunda.zeebe.spring.client.annotation.JobWorker
 import io.camunda.zeebe.spring.client.annotation.Variable
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -57,7 +56,7 @@ class JobWorkers {
                 .await()
     }
 
-    @JobWorker(type = "risk-level")
+    @Coworker(type = "risk-level")
     suspend fun riskLevel(jobClient: JobClient, job: ActivatedJob, @Variable chance: Int) {
         try {
             if (chance >= RiskLevel.values().size) {
@@ -77,7 +76,7 @@ class JobWorkers {
         }
     }
 
-    @JobWorker(type = "approve-app")
+    @Coworker(type = "approve-app")
     suspend fun approve(jobClient: JobClient, job: ActivatedJob) {
         stats?.incrementApproved()
         log.info("Application {} approved", job.processInstanceKey)
@@ -86,7 +85,7 @@ class JobWorkers {
                 .await()
     }
 
-    @JobWorker(type = "reject-app")
+    @Coworker(type = "reject-app")
     suspend fun reject(jobClient: JobClient, job: ActivatedJob) {
         stats?.incrementRejected()
         log.info("Application {} rejected", job.processInstanceKey)
