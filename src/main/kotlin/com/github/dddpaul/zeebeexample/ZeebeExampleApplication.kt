@@ -7,8 +7,10 @@ import org.springframework.boot.ApplicationRunner
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import com.github.dddpaul.zeebeexample.workers.WorkerProgressBar
+import io.camunda.zeebe.spring.client.EnableZeebeClient
 
 @SpringBootApplication
+@EnableZeebeClient
 class ZeebeExampleApplication : ApplicationRunner {
 
     @Autowired(required = false)
