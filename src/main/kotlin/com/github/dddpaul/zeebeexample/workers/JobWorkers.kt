@@ -57,13 +57,10 @@ class JobWorkers {
     }
 
     @Coworker(type = "risk-level")
-    suspend fun riskLevel(jobClient: JobClient, job: ActivatedJob, @Variable chance: Int) {
+    suspend fun riskLevel(jobClient: JobClient, job: ActivatedJob) {
         try {
-            if (chance >= RiskLevel.values().size) {
-                throw RuntimeException("chance = %d is not acceptable".formatted(chance))
-            }
             jobClient.newCompleteCommand(job.key)
-                    .variables(mapOf("riskLevel" to RiskLevel.values().get(chance).name.toLowerCase()))
+                    .variables(mapOf("riskLevel" to RiskLevel.values().get(0).name.toLowerCase()))
                     .send()
                     .await()
         } catch (e: Exception) {
