@@ -15,20 +15,19 @@ java {
 }
 
 repositories {
+	mavenLocal()
 	mavenCentral()
 	maven(url = "https://artifacts.camunda.com/artifactory/camunda-identity-snapshots/")
 }
 
 dependencies {
-	implementation("org.camunda.community.extension.kotlin.coworker:coworker-spring-boot-starter:0.5.0")
-	implementation("io.camunda:zeebe-client-java:8.4.3")
+	implementation("org.camunda.community.extension.kotlin.coworker:coworker-spring-boot-starter:0.6.0-SNAPSHOT")
 	implementation("me.tongfei:progressbar:0.10.0")
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
 	runtimeOnly("io.micrometer:micrometer-registry-prometheus")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("io.projectreactor:reactor-test")
-//	testImplementation("io.camunda:zeebe-process-test-extension:8.4.2")
 }
 
 tasks.withType<KotlinCompile> {
