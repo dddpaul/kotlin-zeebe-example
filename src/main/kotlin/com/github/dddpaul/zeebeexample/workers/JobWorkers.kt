@@ -1,19 +1,21 @@
 package com.github.dddpaul.zeebeexample.workers
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.github.dddpaul.zeebeexample.RiskError.RISK_LEVEL_ERROR
+import com.github.dddpaul.zeebeexample.RiskLevel
+import com.github.dddpaul.zeebeexample.actuator.ApplicationStats
 import io.camunda.zeebe.client.api.response.ActivatedJob
+import io.camunda.zeebe.client.api.worker.JobClient
 import io.camunda.zeebe.spring.client.annotation.Variable
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.future.await
+import kotlinx.coroutines.withContext
+import org.camunda.community.extension.coworker.spring.annotation.Coworker
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
-import com.github.dddpaul.zeebeexample.RiskError.RISK_LEVEL_ERROR
-import com.github.dddpaul.zeebeexample.RiskLevel
-import com.github.dddpaul.zeebeexample.actuator.ApplicationStats
-import io.camunda.zeebe.client.api.worker.JobClient
-import kotlinx.coroutines.future.await
-import org.camunda.community.extension.coworker.spring.annotation.Coworker
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -42,7 +44,9 @@ class JobWorkers {
                     .timeout(Duration.of(10, ChronoUnit.SECONDS))
                     .GET()
                     .build()
-            val response = client.send(request, HttpResponse.BodyHandlers.ofString())
+            val response = withContext(Dispatchers.IO) {
+                client.send(request, HttpResponse.BodyHandlers.ofString())
+            }
             val loopSettings = ObjectMapper().readValue(response.body(), LoopSettings::class.java)
             retries = loopSettings.retries
             timeout = loopSettings.timeout
@@ -59,11 +63,11 @@ class JobWorkers {
     @Coworker(type = "risk-level")
     suspend fun riskLevel(jobClient: JobClient, job: ActivatedJob, @Variable chance: Int) {
         try {
-            if (chance >= RiskLevel.values().size) {
+            if (chance >= RiskLevel.entries.size) {
                 throw RuntimeException("chance = %d is not acceptable".formatted(chance))
             }
             jobClient.newCompleteCommand(job.key)
-                    .variables(mapOf("riskLevel" to RiskLevel.values().get(chance).name.toLowerCase()))
+                    .variables(mapOf("riskLevel" to RiskLevel.entries[chance].name.toLowerCase()))
                     .send()
                     .await()
         } catch (e: Exception) {
