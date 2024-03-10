@@ -12,3 +12,9 @@ worker-bar:
 	@LOGGING_LEVEL_COM_GITHUB_DDDPAUL_ZEEBEEXAMPLE_WORKERS=OFF \
 	java -jar build/libs/kotlin-zeebe-example-0.0.1-SNAPSHOT.jar \
 	--app.worker.enabled=true --app.worker.progress-bar.enabled=true
+
+worker-bar-jfr:
+	@LOGGING_LEVEL_COM_GITHUB_DDDPAUL_ZEEBEEXAMPLE_WORKERS=OFF \
+	java -XX:StartFlightRecording=filename=./ \
+	-jar build/libs/kotlin-zeebe-example-0.0.1-SNAPSHOT.jar \
+	--app.worker.enabled=true --app.worker.progress-bar.enabled=true
